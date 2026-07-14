@@ -1,8 +1,19 @@
 # Squeak
 
+[![Latest release](https://img.shields.io/github/v/release/Snorklefudge/squeak-player)](https://github.com/Snorklefudge/squeak-player/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Snorklefudge/squeak-player/total)](https://github.com/Snorklefudge/squeak-player/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A minimal, YouTube-style video player for Windows, built on [LibVLCSharp](https://github.com/videolan/libvlcsharp) (WPF). It plays anything VLC can, but wraps it in a clean, borderless, hover-to-reveal interface instead of the classic VLC chrome.
 
 > The UI is in **English by default** and auto-switches to **Polish** on Polish Windows. You can also pick the language from the right-click menu.
+
+## Download
+
+1. Grab the latest **`Squeak-Setup-x.y.z.exe`** from the [**Releases page**](https://github.com/Snorklefudge/squeak-player/releases/latest).
+2. Run it — it installs Squeak with a Start-menu shortcut and, if your PC doesn't already have the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0), installs that automatically.
+
+That's it — no VLC install needed.
 
 ## Features
 
