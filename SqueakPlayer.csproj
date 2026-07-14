@@ -8,7 +8,7 @@
     <RootNamespace>SqueakPlayer</RootNamespace>
     <AssemblyName>Squeak</AssemblyName>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Product>Squeak</Product>
   </PropertyGroup>
 

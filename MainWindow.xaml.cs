@@ -241,20 +241,11 @@ namespace SqueakPlayer
             _settings.AlwaysOnTop = _pinned;
             _settings.Save();
 
-            // Tear VLC down in a safe order to avoid the native 0xC0000005 on exit:
-            // stop playback, detach + dispose the video host (airspace window), then
-            // the player, then the library.
-            try
-            {
-                _mp.TimeChanged -= Mp_TimeChanged;
-                _mp.Stop();
-                Video.MediaPlayer = null;
-                Video.Dispose();
-                _mp.Dispose();
-                _currentMedia?.Dispose();
-                _libVLC.Dispose();
-            }
-            catch { /* best-effort shutdown */ }
+            // libvlc's native shutdown intermittently raises an access violation
+            // (0xC0000005) as the process tears down — and calling Stop()/Dispose()
+            // can trigger it too. Everything is already persisted, so terminate the
+            // process immediately; the OS reclaims all resources cleanly.
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
         }
 
         // ---------- Window message hook (stop white flicker on resize) ----------
