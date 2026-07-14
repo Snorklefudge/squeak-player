@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+publish/
+dist/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# OS junk
+Thumbs.db
+Desktop.ini
+
+# Local Claude Code config
+.claude/
