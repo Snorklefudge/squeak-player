@@ -33,7 +33,8 @@ A minimal, YouTube-style video player for Windows, built on [LibVLCSharp](https:
 ## Requirements
 
 - Windows 10 / 11 (x64)
-- To run from source: [.NET 8 SDK](https://dotnet.microsoft.com/download)
+- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) — the installer downloads and installs it automatically if it's missing.
+- To run/build from source: [.NET 8 SDK](https://dotnet.microsoft.com/download)
 
 The `VideoLAN.LibVLC.Windows` NuGet package bundles the libvlc binaries automatically — you do **not** need VLC installed.
 
@@ -47,22 +48,31 @@ dotnet run --project SqueakPlayer.csproj
 
 ## Build a release
 
-Produce a self-contained build (bundles the .NET runtime + libvlc, so end users need nothing installed):
+Produce a framework-dependent build (smaller download; relies on the .NET 8 Desktop Runtime, which the installer provides):
 
 ```powershell
-dotnet publish SqueakPlayer.csproj -c Release -r win-x64 --self-contained true -o publish
+dotnet publish SqueakPlayer.csproj -c Release -r win-x64 --self-contained false -o publish
 ```
 
-The `publish` folder then contains `Squeak.exe` and everything it needs.
+The `publish` folder then contains `Squeak.exe` and the bundled libvlc.
 
 ## Build the installer
 
-The installer is defined with [Inno Setup](https://jrsoftware.org/isdl.php) (free).
+The installer is defined with [Inno Setup](https://jrsoftware.org/isdl.php) 6.1+ (free). It installs the .NET 8 Desktop Runtime automatically if the target machine doesn't have it.
 
 1. Publish the app (command above) so the `publish` folder exists.
 2. Install Inno Setup.
 3. Open `installer/Squeak.iss` in Inno Setup and click **Compile** (or run `iscc installer/Squeak.iss`).
 4. The resulting `Squeak-Setup-x.y.z.exe` lands in `dist/`.
+
+## Automated releases
+
+Pushing a version tag builds the installer and publishes a GitHub Release automatically (see `.github/workflows/release.yml`):
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Credits & license
 
