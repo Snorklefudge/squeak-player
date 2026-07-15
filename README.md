@@ -1,4 +1,7 @@
-# Squeak
+<h1 align="center">
+  <img src="icon.png" width="88" alt="Squeak"><br>
+  Squeak
+</h1>
 
 [![Latest release](https://img.shields.io/github/v/release/Snorklefudge/squeak-player)](https://github.com/Snorklefudge/squeak-player/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Snorklefudge/squeak-player/total)](https://github.com/Snorklefudge/squeak-player/releases)
@@ -7,6 +10,13 @@
 A minimal, YouTube-style video player for Windows, built on [LibVLCSharp](https://github.com/videolan/libvlcsharp) (WPF). It plays anything VLC can, but wraps it in a clean, borderless, hover-to-reveal interface instead of the classic VLC chrome.
 
 > The UI is in **English by default** and auto-switches to **Polish** on Polish Windows. You can also pick the language from the right-click menu.
+
+## Screenshots
+
+|  |  |
+| :---: | :---: |
+| ![Squeak playing a video with the control bar visible](docs/screenshot-player.png) | ![Squeak's right-click context menu](docs/screenshot-menu.png) |
+| Hover-to-reveal controls & skip-intro | Right-click menu (tracks, subtitles, language…) |
 
 ## Download
 

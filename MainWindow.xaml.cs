@@ -30,6 +30,7 @@ namespace SqueakPlayer
         private bool _controlsVisible = true;
         private bool _isDraggingSeek;
         private bool _scrubbing;
+        private bool _volScrubbing;   // dragging the volume slider via the cursor poll
         private bool _updatingSeekFromPlayer;
         private long _lengthMs;
 
@@ -360,10 +361,24 @@ namespace SqueakPlayer
                     ScrubToScreen(pt);
                     return;
                 }
+
+                // Press anywhere on the volume slider (incl. empty track) sets the
+                // level and follows the cursor — WPF mouse events don't reach it
+                // reliably over the video overlay, same as the seek bar.
+                if (_controlsVisible && OverElement(pt, VolumeSlider))
+                {
+                    _volScrubbing = true;
+                    SetVolumeFromScreen(pt);
+                    return;
+                }
             }
             else if (lb && _lbDown && _scrubbing)
             {
                 ScrubToScreen(pt); // follow the cursor while the button is held
+            }
+            else if (lb && _lbDown && _volScrubbing)
+            {
+                SetVolumeFromScreen(pt); // follow the cursor while the button is held
             }
             else if (!lb && _lbDown)
             {
@@ -374,6 +389,11 @@ namespace SqueakPlayer
                     _isDraggingSeek = false;
                     SeekTo(SeekBar.Value);   // final, exact seek
                     SeekPreview.IsOpen = false;
+                }
+                else if (_volScrubbing)
+                {
+                    _volScrubbing = false;
+                    ShowVolumeOsd(); // non-sticky now: let the OSD fade out
                 }
                 else
                 {
@@ -598,6 +618,31 @@ namespace SqueakPlayer
             catch { /* PointFromScreen can throw during teardown */ }
         }
 
+        // Width of the volume slider's thumb (see VolumeBarStyle in App.xaml).
+        private const double VolumeThumbWidth = 11;
+
+        // Volume scrubbing driven from the cursor poll (mirrors ScrubToScreen for the
+        // seek bar). The thumb can only travel across (width - thumbWidth), so we map
+        // the cursor the same way WPF's Track does — otherwise the thumb lands offset
+        // from the cursor by up to half a thumb near the ends, which reads as a jump.
+        private void SetVolumeFromScreen(POINT screen)
+        {
+            double w = VolumeSlider.ActualWidth;
+            double travel = w - VolumeThumbWidth;
+            if (travel <= 0) return;
+            try
+            {
+                double x = VolumeSlider.PointFromScreen(new Point(screen.X, screen.Y)).X;
+                double frac = Math.Clamp((x - VolumeThumbWidth / 2) / travel, 0, 1);
+                int v = (int)Math.Round(frac * VolumeSlider.Maximum);
+                // Deadband: skip if the whole-percent level is unchanged, so the 30ms
+                // poll doesn't thrash the thumb on sub-pixel cursor wobble.
+                if (v == _volume) return;
+                VolumeSlider.Value = v; // triggers VolumeSlider_ValueChanged
+            }
+            catch { /* PointFromScreen can throw during teardown */ }
+        }
+
         private void SeekBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (_updatingSeekFromPlayer) return;
@@ -636,6 +681,28 @@ namespace SqueakPlayer
             long target = Math.Clamp(_mp.Time + deltaMs, 0, _lengthMs);
             _mp.Time = target;
             ShowOsd($"{(deltaMs >= 0 ? "»" : "«")}  {Fmt(target)} / {Fmt(_lengthMs)}");
+        }
+
+        // Step a single frame with the , / . keys (the < and > keys). Always pauses
+        // first so exactly one frame is shown. Forward uses libvlc's NextFrame; there
+        // is no native "previous frame", so we step back one frame's worth of time
+        // using the media's frame rate (falling back to ~25 fps if it's unknown).
+        private void FrameStep(int direction)
+        {
+            if (_lengthMs <= 0) return;
+            if (_isPlaying) TogglePause();
+
+            if (direction > 0)
+            {
+                _mp.NextFrame();
+            }
+            else
+            {
+                float fps = _mp.Fps;
+                long frameMs = fps > 0 ? (long)Math.Round(1000.0 / fps) : 40;
+                _mp.Time = Math.Clamp(_mp.Time - frameMs, 0, _lengthMs);
+            }
+            ShowOsd(direction > 0 ? "❙▶  +1" : "◀❙  −1");
         }
 
         // Hover-preview of the time under the cursor on the seek bar.
@@ -691,8 +758,18 @@ namespace SqueakPlayer
             ShowVolumeOsd();
         }
 
+        // Scroll wheel anywhere over the video adjusts the volume (5% per notch).
+        private void Overlay_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            AdjustVolume(e.Delta > 0 ? +5 : -5);
+            ShowControls();
+            _hideTimer.Stop();
+            _hideTimer.Start();
+            e.Handled = true;
+        }
+
         private void ShowVolumeOsd()
-            => ShowOsd(_muted || _volume == 0 ? Loc.Muted : $"🔊  {_volume}%");
+            => ShowOsd(_muted || _volume == 0 ? Loc.Muted : $"🔊  {_volume}%", sticky: _volScrubbing);
 
         private void ApplyVolume()
         {
@@ -906,9 +983,20 @@ namespace SqueakPlayer
             CenterFlashScale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1, 1.6, dur) { EasingFunction = ease });
         }
 
-        private void ShowOsd(string text)
+        private void ShowOsd(string text) => ShowOsd(text, sticky: false);
+
+        // sticky=true just holds the OSD visible with a cheap opacity set — no new
+        // animation is allocated. Used while dragging the volume so we aren't spinning
+        // up a fresh fade storyboard on every 1% step (that was the drag lag).
+        private void ShowOsd(string text, bool sticky)
         {
             OsdText.Text = text;
+            if (sticky)
+            {
+                Osd.BeginAnimation(OpacityProperty, null);
+                Osd.Opacity = 1;
+                return;
+            }
             // Hold at full opacity ~0.9s, then fade out.
             var fade = new DoubleAnimationUsingKeyFrames();
             fade.KeyFrames.Add(new DiscreteDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.Zero)));
@@ -981,6 +1069,8 @@ namespace SqueakPlayer
                 case Key.Right: SeekRelative(5000); break;
                 case Key.Up: AdjustVolume(+5); break;
                 case Key.Down: AdjustVolume(-5); break;
+                case Key.OemComma: FrameStep(-1); break;   // < : previous frame
+                case Key.OemPeriod: FrameStep(+1); break;  // > : next frame
                 case Key.M: ToggleMute(); break;
                 case Key.T: TogglePin(); break;
                 case Key.F: ToggleFullscreen(); break;
