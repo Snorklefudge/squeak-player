@@ -16,7 +16,7 @@ namespace SqueakPlayer
         public bool Muted { get; set; }
         public bool AlwaysOnTop { get; set; }
         public bool AutoplayNext { get; set; } = true;
-        public string Language { get; set; } = "auto";   // "auto" | "en" | "pl"
+        public string Language { get; set; } = "auto";   // "auto" | "en" | "pl" | "es" | "fr" | "zh" | "ja"
 
         // file path -> last playback position (ms)
         public Dictionary<string, long> Positions { get; set; } = new();

@@ -98,6 +98,12 @@ namespace SqueakPlayer
         private static extern short GetAsyncKeyState(int vKey);
 
         [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+
+        [DllImport("user32.dll")]
         private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
 
         [DllImport("user32.dll")]
@@ -399,7 +405,7 @@ namespace SqueakPlayer
                 {
                     bool moved = Math.Abs(pt.X - _lbDownPt.X) > 4 || Math.Abs(pt.Y - _lbDownPt.Y) > 4;
                     bool menuNearby = _menuOpen || (DateTime.UtcNow - _lastMenuClose).TotalMilliseconds < 250;
-                    if (IsActive && CursorInsideWindow(pt) && !moved && !_lbDownOnControls && !menuNearby)
+                    if (AppIsForeground() && CursorInsideWindow(pt) && !moved && !_lbDownOnControls && !menuNearby)
                         TogglePause();
                 }
             }
@@ -413,7 +419,7 @@ namespace SqueakPlayer
             else if (!rb && _rbDown)
             {
                 _rbDown = false;
-                if (IsActive && CursorInsideWindow(pt))
+                if (AppIsForeground() && CursorInsideWindow(pt))
                     ShowContextMenuAt(pt);
             }
         }
@@ -434,6 +440,19 @@ namespace SqueakPlayer
                 return p.X >= 0 && p.Y >= 0 && p.X <= el.ActualWidth && p.Y <= el.ActualHeight;
             }
             catch { return false; }
+        }
+
+        // True when our app owns the foreground window. We can't use Window.IsActive
+        // here: with the LibVLCSharp airspace overlay, activation lives on a child
+        // window in our process, so IsActive is often false even though the app is
+        // frontmost (which is why the right-click menu wouldn't open on the idle
+        // screen). Matching the foreground window's process id covers both windows.
+        private static bool AppIsForeground()
+        {
+            var fg = GetForegroundWindow();
+            if (fg == IntPtr.Zero) return false;
+            GetWindowThreadProcessId(fg, out uint pid);
+            return pid == (uint)Environment.ProcessId;
         }
 
         private bool CursorInsideWindow(POINT screen)
@@ -880,6 +899,10 @@ namespace SqueakPlayer
             lang.Items.Add(LangItem(Loc.LangAuto, "auto"));
             lang.Items.Add(LangItem("English", "en"));
             lang.Items.Add(LangItem("Polski", "pl"));
+            lang.Items.Add(LangItem("Español", "es"));
+            lang.Items.Add(LangItem("Français", "fr"));
+            lang.Items.Add(LangItem("中文", "zh"));
+            lang.Items.Add(LangItem("日本語", "ja"));
             menu.Items.Add(lang);
 
             var open = new MenuItem { Header = Loc.MenuOpen };

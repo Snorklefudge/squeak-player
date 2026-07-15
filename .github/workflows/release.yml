@@ -38,8 +38,19 @@ jobs:
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ steps.ver.outputs.version }} installer\Squeak.iss
 
+      - name: Publish standalone (self-contained, no .NET runtime needed)
+        run: dotnet publish SqueakPlayer.csproj -c Release -r win-x64 --self-contained true -p:Version=${{ steps.ver.outputs.version }} -o publish-standalone
+
+      - name: Zip standalone
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path publish-standalone\* -DestinationPath "dist\Squeak-Portable-${{ steps.ver.outputs.version }}-win-x64.zip" -Force
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Squeak-Setup-*.exe
+          files: |
+            dist/Squeak-Setup-*.exe
+            dist/Squeak-Portable-*.zip
           generate_release_notes: true
