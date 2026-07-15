@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="icon.png" width="88" alt="Squeak"><br>
+  <img src="icon256.png" width="88" alt="Squeak"><br>
   Squeak
 </h1>
 
