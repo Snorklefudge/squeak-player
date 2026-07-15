@@ -32,7 +32,8 @@ Either way — no VLC install needed.
 - **Hover-to-reveal controls** — top bar and bottom control bar slide in on mouse movement and auto-hide after a couple of seconds.
 - **Click anywhere to play/pause**, with a center flash animation.
 - **Scrubbable timeline** — click and drag anywhere on the bar to scrub the video live, with a time preview on hover.
-- **Volume** — slider + mute button, on-screen volume/seek feedback.
+- **Volume** — slider + mute button, or scroll the mouse wheel over the video to adjust; on-screen volume/seek feedback.
+- **Frame stepping** — nudge one frame at a time with the `,` and `.` keys.
 - **Previous / next** file in the folder, plus **autoplay** the next file when one ends.
 - **Audio track & subtitle** selection (right-click menu).
 - **Skip intro** button when a file has chapters.
@@ -47,6 +48,7 @@ Either way — no VLC install needed.
 | `Space` / click | Play / pause |
 | `←` / `→` | Seek ∓5 s |
 | `↑` / `↓` | Volume ±5% |
+| `,` / `.` | Previous / next frame |
 | `M` | Mute |
 | `T` | Pin on top |
 | `F` | Fullscreen |
