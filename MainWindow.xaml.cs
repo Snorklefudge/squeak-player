@@ -191,7 +191,16 @@ namespace SqueakPlayer
             ApplyLanguage();
             ApplyVolume();
 
-            Loaded += (_, _) => MakeBackgroundBlack();
+            Loaded += (_, _) =>
+            {
+                MakeBackgroundBlack();
+
+                // If we were launched with a file (command line / file association),
+                // play it now that the window (and its native VLC surface) exists.
+                var pending = (Application.Current as App)?.PendingOpenPath;
+                if (!string.IsNullOrEmpty(pending))
+                    OpenFile(pending);
+            };
 
         }
 
